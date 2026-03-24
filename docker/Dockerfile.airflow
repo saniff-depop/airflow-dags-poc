@@ -1,0 +1,19 @@
+# Pinned Airflow image + PyMySQL for AIRFLOW__DATABASE__SQL_ALCHEMY_CONN (mysql+pymysql://...).
+# The apache/airflow image forbids running pip as root; install as the runtime user.
+# https://airflow.apache.org/docs/docker-stack/build.html#adding-a-new-pypi-package
+ARG AIRFLOW_BASE_IMAGE=apache/airflow:2.10.5-python3.12
+FROM ${AIRFLOW_BASE_IMAGE}
+
+USER airflow
+RUN pip install --no-cache-dir \
+    pymysql \
+    "apache-airflow-providers-postgres==5.13.1"
+# dbt + Cosmos require protobuf>=6.0; the Airflow base image ships protobuf 5.x
+# (pinned by opentelemetry-proto 1.27.0). Upgrade pip for faster resolution,
+# then explicitly pull protobuf 6.x so pip doesn't backtrack through every
+# dbt-protos release.
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --upgrade \
+    "protobuf>=6.0,<7.0" \
+    "dbt-postgres==1.10.0" \
+    "astronomer-cosmos==1.13.1"

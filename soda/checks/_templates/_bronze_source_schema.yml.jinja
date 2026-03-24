@@ -1,0 +1,8 @@
+# Fragment: first check under ``checks for <table>:`` on ``football_source`` (``public``).
+  - schema:
+      fail:
+        when required column missing: [{% for col in columns %}{{ col.name }}{% if not loop.last %}, {% endif %}{% endfor %}]
+        when wrong column type:
+{% for col in columns %}
+          {{ col.name }}: {{ col.pg_type }}
+{% endfor %}

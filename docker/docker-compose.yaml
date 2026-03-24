@@ -1,0 +1,180 @@
+# Local stack: MySQL (Airflow metadata) + Postgres source + warehouse + Airflow (LocalExecutor).
+# From repo root: cp docker/.env.example docker/.env  then  make up
+# Validate: make compose_config
+
+name: airflow-dags-poc
+
+x-airflow-common: &airflow-common
+  build:
+    # Absolute path via Makefile-exported AIRFLOW_COMPOSE_CONTEXT (avoids wrong `..` when cwd ≠ repo root).
+    context: ${AIRFLOW_COMPOSE_CONTEXT:?Set AIRFLOW_COMPOSE_CONTEXT to the repository root (see Makefile)}
+    dockerfile: docker/Dockerfile.airflow
+    args:
+      AIRFLOW_BASE_IMAGE: ${AIRFLOW_BASE_IMAGE:-apache/airflow:2.10.5-python3.12}
+  image: ${AIRFLOW_IMAGE_NAME:-airflow-dags-poc-airflow:2.10.5}
+  # Custom image name is not on Docker Hub — never pull; build locally only.
+  pull_policy: never
+  environment:
+    AIRFLOW_UID: ${AIRFLOW_UID:-50000}
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN}
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY:-46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzvMPg=}
+    AIRFLOW_ADMIN_USERNAME: ${AIRFLOW_ADMIN_USERNAME:-airflow}
+    AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD:-airflow}
+    AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL:-admin@example.com}
+    # Fast DAG refresh for development (default: 300s and 30s)
+    AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: 10
+    AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 10
+    # dbt profile connection — matches postgres_warehouse service
+    DBT_POSTGRES_HOST: postgres_warehouse
+    DBT_POSTGRES_PORT: "5432"
+    DBT_POSTGRES_USER: ${POSTGRES_WAREHOUSE_USER:-warehouse_user}
+    DBT_POSTGRES_PASSWORD: ${POSTGRES_WAREHOUSE_PASSWORD:-changeme_warehouse}
+    DBT_POSTGRES_DBNAME: ${POSTGRES_WAREHOUSE_DB:-warehouse_db}
+  volumes:
+    # Paths relative to `docker compose --project-directory` (repo root); see Makefile.
+    - ./dags:/opt/airflow/dags
+    - ./dbt:/opt/airflow/dbt
+    - ./soda:/opt/airflow/soda
+    - ./plugins:/opt/airflow/plugins
+    - airflow_logs:/opt/airflow/logs
+  user: "${AIRFLOW_UID:-50000}:0"
+  networks:
+    - airflow-dags-poc
+
+services:
+  mysql_airflow:
+    image: mysql:8.4
+    container_name: mysql_airflow
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme_root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-airflow}
+      MYSQL_USER: ${MYSQL_USER:-airflow}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme_airflow}
+    ports:
+      - "${MYSQL_AIRFLOW_PORT:-3307}:3306"
+    volumes:
+      - mysql_airflow_data:/var/lib/mysql
+    networks:
+      - airflow-dags-poc
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-uroot",
+          "-p${MYSQL_ROOT_PASSWORD:-changeme_root}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  postgres_source:
+    image: postgres:16-alpine
+    container_name: postgres_source
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_SOURCE_USER:-source_user}
+      POSTGRES_PASSWORD: ${POSTGRES_SOURCE_PASSWORD:-changeme_source}
+      POSTGRES_DB: ${POSTGRES_SOURCE_DB:-source_db}
+    ports:
+      - "${POSTGRES_SOURCE_PORT:-5433}:5432"
+    volumes:
+      - postgres_source_data:/var/lib/postgresql/data
+    networks:
+      - airflow-dags-poc
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_SOURCE_USER:-source_user} -d ${POSTGRES_SOURCE_DB:-source_db}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  postgres_warehouse:
+    image: postgres:16-alpine
+    container_name: postgres_warehouse
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_WAREHOUSE_USER:-warehouse_user}
+      POSTGRES_PASSWORD: ${POSTGRES_WAREHOUSE_PASSWORD:-changeme_warehouse}
+      POSTGRES_DB: ${POSTGRES_WAREHOUSE_DB:-warehouse_db}
+    ports:
+      - "${POSTGRES_WAREHOUSE_PORT:-5434}:5432"
+    volumes:
+      - postgres_warehouse_data:/var/lib/postgresql/data
+    networks:
+      - airflow-dags-poc
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_WAREHOUSE_USER:-warehouse_user} -d ${POSTGRES_WAREHOUSE_DB:-warehouse_db}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow-init
+    depends_on:
+      mysql_airflow:
+        condition: service_healthy
+    entrypoint: /bin/bash
+    command:
+      - -ce
+      - |
+        airflow db migrate
+        airflow users create \
+          --username "${AIRFLOW_ADMIN_USERNAME}" \
+          --password "${AIRFLOW_ADMIN_PASSWORD}" \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email "${AIRFLOW_ADMIN_EMAIL}" || true
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: airflow-webserver
+    depends_on:
+      mysql_airflow:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    command: webserver
+    ports:
+      - "${AIRFLOW_WEBSERVER_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow-scheduler
+    depends_on:
+      mysql_airflow:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    command: scheduler
+    restart: unless-stopped
+
+volumes:
+  mysql_airflow_data:
+  postgres_source_data:
+  postgres_warehouse_data:
+  airflow_logs:
+
+networks:
+  airflow-dags-poc:
+    name: airflow-dags-poc

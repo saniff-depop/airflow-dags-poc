@@ -1,0 +1,38 @@
+# Soda Core 3 — both Postgres data sources for SodaCL cross-checks (Compose / Airflow worker).
+# Committed with the same non-secret placeholders as soda/data_sources/*.compose.yml.
+# For host-native runs, copy to gitignored soda/configuration.yml or use *.local.yml patterns.
+#
+# Postgres connections must use ``username:`` (Soda ``PostgresDataSource``); ``user:`` is ignored
+# and libpq then defaults to the process user (e.g. ``airflow`` in the worker).
+#
+# ``schema`` sets libpq ``search_path`` and filters information_schema for schema checks. Use
+# ``checks for <table>:`` (not ``schema.table``) so Soda matches ``table_name`` in PG metadata.
+data_source football_warehouse:
+  type: postgres
+  connection:
+    host: postgres_warehouse
+    port: 5432
+    username: warehouse_user
+    password: changeme_warehouse
+    database: warehouse_db
+    schema: bronze
+
+data_source football_warehouse_silver_stg:
+  type: postgres
+  connection:
+    host: postgres_warehouse
+    port: 5432
+    username: warehouse_user
+    password: changeme_warehouse
+    database: warehouse_db
+    schema: silver_stg
+
+data_source football_source:
+  type: postgres
+  connection:
+    host: postgres_source
+    port: 5432
+    username: source_user
+    password: changeme_source
+    database: source_db
+    schema: public

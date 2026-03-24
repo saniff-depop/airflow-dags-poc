@@ -1,0 +1,16 @@
+# Pre-silver reference (hand-written SodaCL) — not used by the DAG; Jinja templates are authoritative.
+checks for fixture:
+  - schema:
+      fail:
+        when required column missing:
+          - fixture_id
+          - season_id
+          - round_id
+          - home_team_id
+          - away_team_id
+          - venue_id
+          - kickoff_utc
+          - status
+          - _ingested_at
+          - _batch_id
+          - _source_system

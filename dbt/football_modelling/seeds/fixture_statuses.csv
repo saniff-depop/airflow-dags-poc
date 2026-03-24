@@ -1,0 +1,5 @@
+status,status_label,is_completed
+finished,Finished,true
+scheduled,Scheduled,false
+postponed,Postponed,false
+cancelled,Cancelled,false

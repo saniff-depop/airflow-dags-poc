@@ -1,0 +1,21 @@
+# Post-bronze on warehouse ``bronze``: row parity vs source, nullability, optional dupes.
+# Schema / column types are validated in pre_checks on ``football_source``.
+# Row parity: reference the source table by name only (not ``public.<name>``) when
+# ``football_source`` sets ``schema: public``, or Soda may emit ``public.public.*``.
+# Context: ``table``, ``columns`` (``name``, ``pg_type``, optional ``optional``); optional ``duplicate_columns``.
+checks for {{ table }}:
+{% for col in columns %}
+{% if not col.get('optional') %}
+  - missing_count({{ col.name }}) = 0
+{% endif %}
+{% endfor %}
+  - row_count same as {{ table }} in football_source
+{% if duplicate_columns is defined and duplicate_columns %}
+  - failed rows:
+      name: Duplicate groups on {{ duplicate_columns | join(', ') }}
+      fail query: |
+        SELECT {% for c in duplicate_columns %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}, COUNT(*) AS _soda_dup_n
+        FROM bronze.{{ table }}
+        GROUP BY {% for c in duplicate_columns %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}
+        HAVING COUNT(*) > 1
+{% endif %}

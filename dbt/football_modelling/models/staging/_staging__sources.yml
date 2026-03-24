@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: silver
+    database: "{{ env_var('DBT_POSTGRES_DBNAME', 'warehouse') }}"
+    schema: silver
+    tables:
+      - name: competition
+      - name: venue
+      - name: season
+      - name: team
+      - name: player
+      - name: player_contract
+      - name: matchday_round
+      - name: fixture
+      - name: match_result

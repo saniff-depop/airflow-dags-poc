@@ -1,0 +1,193 @@
+version: 2
+
+models:
+  - name: dim_competition
+    description: "One row per competition. Pass-through from staging."
+    columns:
+      - name: competition_id
+        description: "Primary key. Unique identifier for a competition."
+        tests:
+          - unique
+          - not_null
+      - name: competition_name
+        description: "Display name of the competition (e.g. Premier League)."
+      - name: country_code
+        description: "ISO 3166-1 alpha-2 country code."
+        tests:
+          - relationships:
+              to: ref('country_codes')
+              field: country_code
+      - name: country_name
+        description: "Full country name from seed lookup."
+      - name: region
+        description: "Continental region from seed lookup."
+      - name: sub_region
+        description: "Sub-regional grouping from seed lookup."
+
+  - name: dim_venue
+    description: >
+      SCD Type 2 history for venue name and capacity; city repeats on each version (immutable for SCD).
+    columns:
+      - name: venue_scd_id
+        description: "Surrogate key for one venue version."
+        tests:
+          - unique
+          - not_null
+      - name: venue_id
+        description: "Natural key. Stable venue identifier across versions."
+        tests:
+          - not_null
+      - name: venue_name
+        description: "Display name for this version."
+      - name: city
+        description: "City (immutable for SCD per modelling spec)."
+      - name: capacity
+        description: "Seating capacity for this version."
+      - name: dbt_valid_from
+        description: "Start of validity for this version (inclusive)."
+        tests:
+          - not_null
+      - name: dbt_valid_to
+        description: "End of validity (exclusive); null when current."
+      - name: is_current
+        description: "True when this row is the latest version for the venue."
+
+  - name: dim_player
+    description: >
+      SCD Type 2 history for slowly changing player attributes; name and DOB repeat on each version.
+    columns:
+      - name: player_scd_id
+        description: "Surrogate key for one player attribute version."
+        tests:
+          - unique
+          - not_null
+      - name: player_id
+        description: "Natural key. Stable player identifier across versions."
+        tests:
+          - not_null
+      - name: given_name
+        description: "Player's first name (immutable for SCD; corrections are DQ)."
+      - name: family_name
+        description: "Player's surname (immutable for SCD; corrections are DQ)."
+      - name: date_of_birth
+        description: "Date of birth (immutable for SCD)."
+      - name: nationality
+        description: "Nationality for this version."
+      - name: preferred_foot
+        description: "Preferred foot for this version."
+      - name: dbt_valid_from
+        description: "Start of validity for this version (inclusive)."
+        tests:
+          - not_null
+      - name: dbt_valid_to
+        description: "End of validity (exclusive); null when current."
+      - name: is_current
+        description: "True when this row is the latest version for the player."
+
+  - name: dim_team
+    description: >
+      SCD Type 2 history of each team (from snp_team). Multiple rows per team_id when tracked
+      attributes change; filter is_current for one row per team, or join facts on validity window.
+    columns:
+      - name: team_scd_id
+        description: "Surrogate key for one team version (dbt snapshot row id)."
+        tests:
+          - unique
+          - not_null
+      - name: team_id
+        description: "Natural key. Stable identifier for a football club across versions."
+        tests:
+          - not_null
+      - name: team_name
+        description: "Full name of the team for this version."
+      - name: short_name
+        description: "Abbreviated team name for this version."
+      - name: founded_year
+        description: "Year the club was founded (immutable; repeated on each version)."
+      - name: venue_id
+        description: "Home ground for this version. FK to dim_venue current grain."
+        tests:
+          - relationships:
+              to: ref('dim_venue')
+              field: venue_id
+      - name: venue_name
+        description: "Denormalised venue name for this version."
+      - name: venue_city
+        description: "Denormalised city for this version."
+      - name: venue_capacity
+        description: "Denormalised capacity for this version."
+      - name: dbt_valid_from
+        description: "Start of validity for this version (inclusive)."
+        tests:
+          - not_null
+      - name: dbt_valid_to
+        description: "End of validity for this version (exclusive); null when current."
+      - name: is_current
+        description: "True when this row is the latest version for the team."
+
+  - name: dim_season
+    description: "One row per season. Denormalised with competition name."
+    columns:
+      - name: season_id
+        description: "Primary key. Unique identifier for a season."
+        tests:
+          - unique
+          - not_null
+      - name: competition_id
+        description: "Foreign key to dim_competition."
+        tests:
+          - relationships:
+              to: ref('dim_competition')
+              field: competition_id
+      - name: competition_name
+        description: "Denormalised from dim_competition. Name of the competition."
+      - name: season_label
+        description: "Human-readable season label (e.g. 2024-25)."
+      - name: start_date
+        description: "First day of the season."
+      - name: end_date
+        description: "Last day of the season."
+
+  - name: dim_matchday_round
+    description: "One row per matchday round. Denormalised with season label."
+    columns:
+      - name: round_id
+        description: "Primary key. Unique identifier for a matchweek."
+        tests:
+          - unique
+          - not_null
+      - name: season_id
+        description: "Foreign key to dim_season."
+        tests:
+          - relationships:
+              to: ref('dim_season')
+              field: season_id
+      - name: season_label
+        description: "Denormalised from dim_season. Human-readable season label."
+      - name: round_number
+        description: "Numeric matchweek number within the season."
+      - name: round_label
+        description: "Human-readable round label (e.g. Matchweek 1)."
+
+  - name: dim_date
+    description: "One row per calendar date. Generated date spine covering 2024-01-01 to 2025-12-31."
+    columns:
+      - name: date_day
+        description: "Primary key. The calendar date."
+        tests:
+          - unique
+          - not_null
+      - name: day_of_week
+        description: "Day of week (0=Sunday, 6=Saturday)."
+      - name: month_number
+        description: "Month number (1-12)."
+      - name: quarter_number
+        description: "Quarter number (1-4)."
+      - name: year_number
+        description: "Four-digit year."
+      - name: day_name
+        description: "Full day name (e.g. Monday)."
+      - name: month_name
+        description: "Full month name (e.g. January)."
+      - name: is_weekend
+        description: "True if Saturday or Sunday."

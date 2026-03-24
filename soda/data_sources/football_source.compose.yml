@@ -1,0 +1,10 @@
+# Postgres as seen from Airflow containers (Compose service DNS, port 5432).
+type: postgres
+name: football_source
+connection:
+  host: postgres_source
+  port: 5432
+  username: source_user
+  password: changeme_source
+  database: source_db
+  sslmode: disable

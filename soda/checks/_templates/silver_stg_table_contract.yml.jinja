@@ -1,0 +1,29 @@
+# Rendered Jinja2 — SodaCL (Soda Core 3) for table ``{{ table }}`` (warehouse schema ``silver_stg`` via configuration).
+# Context: ``table``, ``columns`` (with ``pg_type``); optional ``duplicate_columns``, ``row_count_must_be``, ``missing_column_names``.
+checks for {{ table }}:
+  - schema:
+      fail:
+        when required column missing: [{% for col in columns %}{{ col.name }}{% if not loop.last %}, {% endif %}{% endfor %}]
+        when wrong column type:
+{% for col in columns %}
+          {{ col.name }}: {{ col.pg_type }}
+{% endfor %}
+{% if missing_column_names is defined %}
+{% for col in columns %}
+{% if col.name in missing_column_names %}
+  - missing_count({{ col.name }}) = 0
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if duplicate_columns is defined and duplicate_columns %}
+  - failed rows:
+      name: Duplicate groups on {{ duplicate_columns | join(', ') }}
+      fail query: |
+        SELECT {% for c in duplicate_columns %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}, COUNT(*) AS _soda_dup_n
+        FROM silver_stg.{{ table }}
+        GROUP BY {% for c in duplicate_columns %}{{ c }}{% if not loop.last %}, {% endif %}{% endfor %}
+        HAVING COUNT(*) > 1
+{% endif %}
+{% if row_count_must_be is defined %}
+  - row_count = {{ row_count_must_be }}
+{% endif %}

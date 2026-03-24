@@ -1,0 +1,23 @@
+# Pre-silver reference (hand-written SodaCL) — not used by the DAG; Jinja templates are authoritative.
+checks for player_contract:
+  - failed rows:
+      name: No duplicate natural keys (player_id, team_id, valid_from)
+      fail query: |
+        SELECT player_id, team_id, valid_from, COUNT(*) AS _n
+        FROM silver_stg.player_contract
+        GROUP BY player_id, team_id, valid_from
+        HAVING COUNT(*) > 1
+  - row_count = 300
+  - schema:
+      fail:
+        when required column missing:
+          - player_contract_id
+          - player_id
+          - team_id
+          - valid_from
+          - valid_to
+          - shirt_number
+          - is_loan
+          - _ingested_at
+          - _batch_id
+          - _source_system

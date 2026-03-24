@@ -1,0 +1,38 @@
+name: football_modelling
+version: "1.0.0"
+config-version: 2
+profile: football_modelling
+
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+
+snapshots:
+  football_modelling:
+    +target_schema: gold
+
+seeds:
+  football_modelling:
+    +schema: gold
+
+models:
+  football_modelling:
+    staging:
+      +materialized: view
+      +schema: gold
+    dimensions:
+      +materialized: table
+      +schema: gold
+    facts:
+      +materialized: table
+      +schema: gold
+      fct_match:
+        +materialized: incremental
+        +unique_key: fixture_id
+      fct_player_contract:
+        +materialized: table
+    metrics:
+      +materialized: table
+      +schema: gold

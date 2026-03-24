@@ -1,0 +1,10 @@
+type: postgres
+name: football_warehouse
+connection:
+  host: localhost
+  port: 5434
+  username: warehouse_user
+  password: changeme_warehouse
+  database: warehouse_db
+  schema: bronze
+  sslmode: disable

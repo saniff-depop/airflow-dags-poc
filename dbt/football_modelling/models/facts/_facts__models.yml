@@ -1,0 +1,147 @@
+version: 2
+
+models:
+  - name: fct_match
+    description: "One row per completed fixture with result metrics. Only includes fixtures with status 'finished'."
+    columns:
+      - name: fixture_id
+        description: "Primary key. Unique identifier for a completed match."
+        tests:
+          - unique
+          - not_null
+      - name: season_id
+        description: "Foreign key to dim_season."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_season')
+              field: season_id
+      - name: round_id
+        description: "Foreign key to dim_matchday_round."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_matchday_round')
+              field: round_id
+      - name: home_team_id
+        description: "Natural key of the home team (matches dim_team.team_id)."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_id
+      - name: away_team_id
+        description: "Natural key of the away team (matches dim_team.team_id)."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_id
+      - name: home_team_scd_id
+        description: "SCD surrogate for home team version valid at kickoff_utc."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_scd_id
+      - name: away_team_scd_id
+        description: "SCD surrogate for away team version valid at kickoff_utc."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_scd_id
+      - name: venue_id
+        description: "Natural key of the match venue (matches dim_venue.venue_id)."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_venue')
+              field: venue_id
+      - name: match_venue_scd_id
+        description: "SCD surrogate for venue version valid at kickoff_utc."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_venue')
+              field: venue_scd_id
+      - name: kickoff_date
+        description: "Foreign key to dim_date. The date of kickoff (cast from kickoff_utc)."
+        tests:
+          - not_null
+      - name: kickoff_utc
+        description: "Full timestamp of kickoff in UTC. Retained for precision."
+      - name: status
+        description: "Degenerate dimension. Always 'finished' in this fact table."
+        tests:
+          - relationships:
+              to: ref('fixture_statuses')
+              field: status
+      - name: home_goals
+        description: "Goals scored by the home team."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+      - name: away_goals
+        description: "Goals scored by the away team."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+      - name: home_xg
+        description: "Expected goals (xG) for the home team."
+      - name: away_xg
+        description: "Expected goals (xG) for the away team."
+      - name: goal_difference
+        description: "Derived: home_goals - away_goals. Positive means home win."
+      - name: total_goals
+        description: "Derived: home_goals + away_goals."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      - name: result_type
+        description: "Derived: 'home_win', 'away_win', or 'draw'."
+        tests:
+          - relationships:
+              to: ref('match_result_types')
+              field: result_type
+
+  - name: fct_player_contract
+    description: "One row per player contract period."
+    columns:
+      - name: player_contract_id
+        description: "Primary key. Unique identifier for a contract."
+        tests:
+          - unique
+          - not_null
+      - name: player_id
+        description: "Foreign key to dim_player."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_player')
+              field: player_id
+      - name: team_id
+        description: "Foreign key to dim_team."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_id
+      - name: valid_from
+        description: "Contract start date. Foreign key to dim_date."
+      - name: valid_to
+        description: "Contract end date. Null if the contract is still active."
+      - name: shirt_number
+        description: "Squad number assigned to the player."
+      - name: is_loan
+        description: "True if the contract is a loan arrangement."
+      - name: contract_duration_days
+        description: "Derived: valid_to - valid_from, or current_date - valid_from if still active."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0

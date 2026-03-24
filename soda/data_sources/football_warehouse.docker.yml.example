@@ -1,0 +1,12 @@
+# Copy to a mounted path inside Airflow containers (e.g. football_warehouse.docker.yml).
+
+type: postgres
+name: football_warehouse
+connection:
+  host: postgres_warehouse
+  port: 5432
+  username: warehouse_user
+  password: changeme_warehouse
+  database: warehouse_db
+  schema: bronze
+  sslmode: disable

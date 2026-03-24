@@ -1,0 +1,25 @@
+# Pre-bronze on ``football_source`` / ``public``: schema + freshness / non-empty.
+# ``freshness(col) < X`` uses scan wall-clock vs MAX(col); wide defaults suit demo seed.
+{% if table == "fixture" %}
+checks for fixture:
+{% include "_bronze_source_schema.yml.jinja" %}
+  - row_count > 0:
+      name: Source fixture is not empty
+  - freshness(kickoff_utc) < {{ fixture_freshness_max_age }}:
+      name: Fixture kickoff staleness (non-cancelled)
+      filter: status != 'cancelled'
+{% elif table == "match_result" %}
+checks for fixture:
+  - freshness(kickoff_utc) < {{ match_result_proxy_freshness_max_age }}:
+      name: Finished-fixture kickoff staleness (proxy for match_result; table has no timestamp)
+      filter: status = 'finished'
+checks for match_result:
+{% include "_bronze_source_schema.yml.jinja" %}
+  - row_count > 0:
+      name: Source match_result is not empty
+{% else %}
+checks for {{ table }}:
+{% include "_bronze_source_schema.yml.jinja" %}
+  - row_count > 0:
+      name: Source {{ table }} is not empty
+{% endif %}

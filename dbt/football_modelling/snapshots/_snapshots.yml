@@ -1,0 +1,35 @@
+version: 2
+
+snapshots:
+  - name: snp_team
+    description: "SCD Type 2 history of team plus denormalised venue attributes from silver."
+    columns:
+      - name: dbt_scd_id
+        tests:
+          - unique
+          - not_null
+      - name: dbt_valid_from
+        tests:
+          - not_null
+
+  - name: snp_player
+    description: "SCD Type 2 history of player nationality and preferred foot."
+    columns:
+      - name: dbt_scd_id
+        tests:
+          - unique
+          - not_null
+      - name: dbt_valid_from
+        tests:
+          - not_null
+
+  - name: snp_venue
+    description: "SCD Type 2 history of venue display name and capacity; city treated as immutable."
+    columns:
+      - name: dbt_scd_id
+        tests:
+          - unique
+          - not_null
+      - name: dbt_valid_from
+        tests:
+          - not_null

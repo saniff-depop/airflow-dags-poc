@@ -1,0 +1,4 @@
+# Phase 04 spike example: cross–data-source row count (requires live Postgres + configuration).
+checks for competition:
+  # Use bare table name when ``football_source`` has ``schema: public`` (avoids ``public.public.*``).
+  - row_count same as competition in football_source

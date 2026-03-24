@@ -1,0 +1,67 @@
+version: 2
+
+seeds:
+  - name: country_codes
+    description: >
+      ISO 3166-1 alpha-2 country codes with full names and regional groupings.
+      Used to enrich competition and player dimensions with human-readable country information.
+    columns:
+      - name: country_code
+        description: ISO 3166-1 alpha-2 country code (primary key).
+        tests:
+          - unique
+          - not_null
+      - name: country_name
+        description: Full country name in English.
+        tests:
+          - not_null
+      - name: region
+        description: Continental region (e.g., Europe, South America).
+      - name: sub_region
+        description: Sub-regional grouping (e.g., Northern Europe).
+
+  - name: player_positions
+    description: >
+      Football player position codes with display names and positional groupings.
+      Reference data for future player position tracking.
+    columns:
+      - name: position_code
+        description: Short position code (primary key).
+        tests:
+          - unique
+          - not_null
+      - name: position_name
+        description: Full position name.
+        tests:
+          - not_null
+      - name: position_group
+        description: >
+          High-level position group (Goalkeeper, Defender, Midfielder, Forward).
+
+  - name: match_result_types
+    description: >
+      Classification of match outcomes. Externalises the result type logic derived in fct_match.
+    columns:
+      - name: result_type
+        description: Result type code (primary key).
+        tests:
+          - unique
+          - not_null
+      - name: result_label
+        description: Human-readable result label.
+      - name: winning_side
+        description: Which side won (home, away, neither).
+
+  - name: fixture_statuses
+    description: >
+      Valid fixture status values with display labels and completion flag.
+    columns:
+      - name: status
+        description: Status code as stored in source data (primary key).
+        tests:
+          - unique
+          - not_null
+      - name: status_label
+        description: Human-readable status label.
+      - name: is_completed
+        description: Whether this status represents a completed match.

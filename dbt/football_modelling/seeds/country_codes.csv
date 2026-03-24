@@ -1,0 +1,51 @@
+country_code,country_name,region,sub_region
+AR,Argentina,Americas,South America
+AT,Austria,Europe,Western Europe
+AU,Australia,Oceania,Australia and New Zealand
+BE,Belgium,Europe,Western Europe
+BF,Burkina Faso,Africa,Western Africa
+BR,Brazil,Americas,South America
+CD,Democratic Republic of the Congo,Africa,Middle Africa
+CH,Switzerland,Europe,Western Europe
+CI,Côte d'Ivoire,Africa,Western Africa
+CM,Cameroon,Africa,Middle Africa
+CO,Colombia,Americas,South America
+CZ,Czechia,Europe,Eastern Europe
+DE,Germany,Europe,Western Europe
+DK,Denmark,Europe,Northern Europe
+DZ,Algeria,Africa,Northern Africa
+EC,Ecuador,Americas,South America
+EG,Egypt,Africa,Northern Africa
+ES,Spain,Europe,Southern Europe
+FR,France,Europe,Western Europe
+GA,Gabon,Africa,Middle Africa
+GB,United Kingdom,Europe,Northern Europe
+GH,Ghana,Africa,Western Africa
+HR,Croatia,Europe,Southern Europe
+HU,Hungary,Europe,Eastern Europe
+IE,Ireland,Europe,Northern Europe
+IQ,Iraq,Asia,Western Asia
+IT,Italy,Europe,Southern Europe
+JM,Jamaica,Americas,Caribbean
+JP,Japan,Asia,Eastern Asia
+KR,South Korea,Asia,Eastern Asia
+MA,Morocco,Africa,Northern Africa
+ML,Mali,Africa,Western Africa
+MX,Mexico,Americas,North America
+NG,Nigeria,Africa,Western Africa
+NL,Netherlands,Europe,Western Europe
+NO,Norway,Europe,Northern Europe
+NZ,New Zealand,Oceania,Australia and New Zealand
+PL,Poland,Europe,Eastern Europe
+PT,Portugal,Europe,Southern Europe
+PY,Paraguay,Americas,South America
+RS,Serbia,Europe,Southern Europe
+SE,Sweden,Europe,Northern Europe
+SN,Senegal,Africa,Western Africa
+TR,Türkiye,Asia,Western Asia
+UA,Ukraine,Europe,Eastern Europe
+US,United States,Americas,North America
+UY,Uruguay,Americas,South America
+WA,Wales,Europe,Northern Europe
+XK,Kosovo,Europe,Southern Europe
+ZM,Zambia,Africa,Eastern Africa

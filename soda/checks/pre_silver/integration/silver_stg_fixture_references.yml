@@ -1,0 +1,37 @@
+# Pre-silver integration: silver_stg.fixture rows must reference existing dimensions.
+checks for fixture:
+  - failed rows:
+      name: season_id must exist in silver_stg.season
+      fail query: |
+        SELECT f.fixture_id
+        FROM silver_stg.fixture AS f
+        LEFT JOIN silver_stg.season AS s ON f.season_id = s.season_id
+        WHERE s.season_id IS NULL
+  - failed rows:
+      name: round_id must exist in silver_stg.matchday_round
+      fail query: |
+        SELECT f.fixture_id
+        FROM silver_stg.fixture AS f
+        LEFT JOIN silver_stg.matchday_round AS r ON f.round_id = r.round_id
+        WHERE r.round_id IS NULL
+  - failed rows:
+      name: home_team_id must exist in silver_stg.team
+      fail query: |
+        SELECT f.fixture_id
+        FROM silver_stg.fixture AS f
+        LEFT JOIN silver_stg.team AS t ON f.home_team_id = t.team_id
+        WHERE t.team_id IS NULL
+  - failed rows:
+      name: away_team_id must exist in silver_stg.team
+      fail query: |
+        SELECT f.fixture_id
+        FROM silver_stg.fixture AS f
+        LEFT JOIN silver_stg.team AS t ON f.away_team_id = t.team_id
+        WHERE t.team_id IS NULL
+  - failed rows:
+      name: venue_id must exist in silver_stg.venue
+      fail query: |
+        SELECT f.fixture_id
+        FROM silver_stg.fixture AS f
+        LEFT JOIN silver_stg.venue AS v ON f.venue_id = v.venue_id
+        WHERE v.venue_id IS NULL

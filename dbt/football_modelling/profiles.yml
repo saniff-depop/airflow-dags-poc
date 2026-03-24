@@ -1,0 +1,12 @@
+football_modelling:
+  target: local
+  outputs:
+    local:
+      type: postgres
+      host: "{{ env_var('DBT_POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('DBT_POSTGRES_PORT', '5434') | int }}"
+      user: "{{ env_var('DBT_POSTGRES_USER', 'warehouse_user') }}"
+      pass: "{{ env_var('DBT_POSTGRES_PASSWORD', 'warehouse_pass') }}"
+      dbname: "{{ env_var('DBT_POSTGRES_DBNAME', 'warehouse') }}"
+      schema: gold
+      threads: 4

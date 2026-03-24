@@ -1,0 +1,39 @@
+---
+# Soda Core 3 — multi–data-source configuration for `soda.scan.Scan` / `soda scan`.
+#
+# In Docker Compose, use the committed file:
+#   soda/configuration.compose.yml
+#
+# For local overrides (real passwords), copy this file to gitignored:
+#   soda/configuration.yml
+# and point Airflow / CLI at that path.
+
+data_source football_warehouse:
+  type: postgres
+  connection:
+    host: localhost
+    port: 5432
+    username: warehouse_user
+    password: changeme_warehouse
+    database: warehouse_db
+    schema: bronze
+
+data_source football_warehouse_silver_stg:
+  type: postgres
+  connection:
+    host: localhost
+    port: 5432
+    username: warehouse_user
+    password: changeme_warehouse
+    database: warehouse_db
+    schema: silver_stg
+
+data_source football_source:
+  type: postgres
+  connection:
+    host: localhost
+    port: 5433
+    username: source_user
+    password: changeme_source
+    database: source_db
+    schema: public

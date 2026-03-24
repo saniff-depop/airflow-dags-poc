@@ -1,0 +1,115 @@
+version: 2
+
+models:
+  - name: stg_competition
+    description: "One row per competition from silver, lineage columns removed."
+    columns:
+      - name: competition_id
+        description: "Primary key. Unique identifier for a competition (e.g. Premier League)."
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_venue
+    description: "One row per venue from silver, lineage columns removed."
+    columns:
+      - name: venue_id
+        description: "Primary key. Unique identifier for a stadium or ground."
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_season
+    description: "One row per season from silver, lineage columns removed."
+    columns:
+      - name: season_id
+        description: "Primary key. Unique identifier for a competition season."
+        tests:
+          - unique
+          - not_null
+      - name: competition_id
+        description: "Foreign key to stg_competition."
+
+  - name: stg_team
+    description: "One row per team from silver, lineage columns removed."
+    columns:
+      - name: team_id
+        description: "Primary key. Unique identifier for a football club."
+        tests:
+          - unique
+          - not_null
+      - name: venue_id
+        description: "Foreign key to stg_venue. The team's home ground."
+
+  - name: stg_player
+    description: "One row per player from silver, lineage columns removed."
+    columns:
+      - name: player_id
+        description: "Primary key. Unique identifier for a player."
+        tests:
+          - unique
+          - not_null
+      - name: preferred_foot
+        description: "Player's preferred foot."
+        tests:
+          - accepted_values:
+              values: ['left', 'right', 'both']
+              config:
+                where: "preferred_foot is not null"
+
+  - name: stg_player_contract
+    description: "One row per player contract from silver, lineage columns removed."
+    columns:
+      - name: player_contract_id
+        description: "Primary key. Unique identifier for a contract period."
+        tests:
+          - unique
+          - not_null
+      - name: player_id
+        description: "Foreign key to stg_player."
+      - name: team_id
+        description: "Foreign key to stg_team."
+
+  - name: stg_matchday_round
+    description: "One row per matchday round from silver, lineage columns removed."
+    columns:
+      - name: round_id
+        description: "Primary key. Unique identifier for a matchweek round."
+        tests:
+          - unique
+          - not_null
+      - name: season_id
+        description: "Foreign key to stg_season."
+
+  - name: stg_fixture
+    description: "One row per fixture from silver, lineage columns removed."
+    columns:
+      - name: fixture_id
+        description: "Primary key. Unique identifier for a scheduled match."
+        tests:
+          - unique
+          - not_null
+      - name: season_id
+        description: "Foreign key to stg_season."
+      - name: round_id
+        description: "Foreign key to stg_matchday_round."
+      - name: home_team_id
+        description: "Foreign key to stg_team. The home side."
+      - name: away_team_id
+        description: "Foreign key to stg_team. The away side."
+      - name: venue_id
+        description: "Foreign key to stg_venue. Where the match is played."
+      - name: status
+        description: "Match status."
+        tests:
+          - accepted_values:
+              values: ['scheduled', 'live', 'finished', 'postponed', 'cancelled']
+
+  - name: stg_match_result
+    description: "One row per match result from silver, lineage columns removed."
+    columns:
+      - name: fixture_id
+        description: "Primary key. References the fixture this result belongs to."
+        tests:
+          - unique
+          - not_null
